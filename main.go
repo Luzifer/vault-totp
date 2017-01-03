@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/Luzifer/rconfig"
@@ -122,7 +123,7 @@ func buildOutput(secret string) (string, error) {
 	// Output: "123456 (Valid 12s)", "123456 (Valid 1s)"
 
 	n := time.Now()
-	code, err := totp.GenerateCode(secret, n)
+	code, err := totp.GenerateCode(strings.ToUpper(secret), n)
 	if err != nil {
 		return "", err
 	}
