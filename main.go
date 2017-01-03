@@ -86,10 +86,11 @@ func main() {
 			log.Fatalf("An error ocurred while generating the code: %s", err)
 		}
 
-		fmt.Printf("\r%s", output)
-
 		if cfg.OneShot {
+			fmt.Printf("%s", output)
 			break
+		} else {
+			fmt.Printf("\r%s", output)
 		}
 	}
 
