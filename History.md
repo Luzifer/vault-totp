@@ -1,3 +1,7 @@
+# 0.2.1 / 2017-01-04
+
+  * Fix: Update vendored code
+
 # 0.2.0 / 2017-01-04
 
   * Support name field in Vault keys
