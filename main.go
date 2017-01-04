@@ -153,7 +153,7 @@ func getSecretsFromVault() ([]token, error) {
 				}
 			}
 
-			scanPool = scanPool[1:len(scanPool)]
+			scanPool = scanPool[1:]
 		}
 
 	} else {
