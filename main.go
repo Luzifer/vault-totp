@@ -5,13 +5,13 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
+	"sort"
 	"time"
 
 	"github.com/Luzifer/rconfig"
 	"github.com/hashicorp/vault/api"
 	homedir "github.com/mitchellh/go-homedir"
-	"github.com/pquerna/otp/totp"
+	"github.com/sethgrid/curse"
 )
 
 var (
@@ -67,72 +67,70 @@ func main() {
 	}
 
 	var (
-		secret string
-		err    error
+		secrets []token
+		err     error
 	)
 
 	if cfg.TestSecret == "" {
-		secret, err = getSecretFromVault()
+		secrets, err = getSecretsFromVault()
 		if err != nil {
 			log.Fatalf("Error to retrieve secret: %s", err)
 		}
 	} else {
-		secret = cfg.TestSecret
+		secrets = []token{{Name: "Test", Secret: cfg.TestSecret}}
 	}
 
+	sort.Sort(tokenList(secrets))
+
+	output, err := curse.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	firstRun := true
 	for range time.Tick(250 * time.Millisecond) {
-		output, err := buildOutput(secret)
-		if err != nil {
-			log.Fatalf("An error ocurred while generating the code: %s", err)
+		if !firstRun {
+			output.MoveUp(len(secrets))
+		}
+
+		for _, s := range secrets {
+			output.EraseCurrentLine()
+			o, err := s.BuildOutput(len(secrets) > 1)
+			if err != nil {
+				fmt.Printf("%s: ERROR (%s)\n", s.Name, err)
+				continue
+			}
+
+			fmt.Println(o)
 		}
 
 		if cfg.OneShot {
-			fmt.Printf("%s", output)
 			break
-		} else {
-			fmt.Printf("\r%s", output)
 		}
-	}
 
-	fmt.Println("")
+		firstRun = false
+	}
 }
 
-func getSecretFromVault() (string, error) {
+func getSecretsFromVault() ([]token, error) {
 	client, err := api.NewClient(&api.Config{
 		Address: cfg.VaultAddress,
 	})
 
 	if err != nil {
-		return "", fmt.Errorf("Unable to create client: %s", err)
+		return nil, fmt.Errorf("Unable to create client: %s", err)
 	}
 
 	client.SetToken(cfg.VaultToken)
 
 	data, err := client.Logical().Read(rconfig.Args()[1])
 	if err != nil {
-		return "", fmt.Errorf("Unable to read from key %q: %s", rconfig.Args()[1], err)
+		return nil, fmt.Errorf("Unable to read from key %q: %s", rconfig.Args()[1], err)
 	}
 
 	if data.Data[cfg.Field] == nil {
-		return "", fmt.Errorf("The key %q does not have a field named %q.", rconfig.Args()[1], cfg.Field)
+		return nil, fmt.Errorf("The key %q does not have a field named %q.", rconfig.Args()[1], cfg.Field)
 	}
 
-	return data.Data[cfg.Field].(string), nil
-}
-
-func buildOutput(secret string) (string, error) {
-	// Output: "123456 (Valid 12s)", "123456 (Valid 1s)"
-
-	n := time.Now()
-	code, err := totp.GenerateCode(strings.ToUpper(secret), n)
-	if err != nil {
-		return "", err
-	}
-
-	if cfg.NoTime {
-		return fmt.Sprintf("%s", code), nil
-	}
-
-	remain := 30 - (n.Second() % 30)
-	return fmt.Sprintf("%s (Valid %ds) ", code, remain), nil
+	return []token{{Name: rconfig.Args()[1], Secret: data.Data[cfg.Field].(string)}}, nil
 }
