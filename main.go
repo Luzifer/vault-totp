@@ -170,7 +170,12 @@ func getSecretsFromVault() ([]token, error) {
 			return nil, fmt.Errorf("The key %q does not have a field named %q.", k, cfg.Field)
 		}
 
-		resp = append(resp, token{Name: k, Secret: data.Data[cfg.Field].(string)})
+		name := k
+		if data.Data["name"] != nil {
+			name = data.Data["name"].(string)
+		}
+
+		resp = append(resp, token{Name: name, Secret: data.Data[cfg.Field].(string)})
 	}
 
 	return resp, nil
