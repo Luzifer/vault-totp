@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/Luzifer/rconfig"
@@ -95,7 +96,7 @@ func main() {
 
 		for _, s := range secrets {
 			output.EraseCurrentLine()
-			o, err := s.BuildOutput(len(secrets) > 1)
+			o, err := s.BuildOutput(len(secrets) > 1, tokenList(secrets).LongestName())
 			if err != nil {
 				fmt.Printf("%s: ERROR (%s)\n", s.Name, err)
 				continue
@@ -123,14 +124,54 @@ func getSecretsFromVault() ([]token, error) {
 
 	client.SetToken(cfg.VaultToken)
 
-	data, err := client.Logical().Read(rconfig.Args()[1])
-	if err != nil {
-		return nil, fmt.Errorf("Unable to read from key %q: %s", rconfig.Args()[1], err)
+	resp := []token{}
+	keyPool := []string{}
+
+	key := rconfig.Args()[1]
+
+	if strings.HasSuffix(key, "*") {
+		scanPool := []string{strings.TrimRight(key, "*")}
+
+		for len(scanPool) > 0 {
+			s, err := client.Logical().List(scanPool[0])
+			if err != nil {
+				return nil, fmt.Errorf("Unable to list keys %q: %s", key, err)
+			}
+
+			if s == nil {
+				return nil, fmt.Errorf("There is no key %q", scanPool[0])
+			}
+
+			if s.Data["keys"] != nil {
+				for _, sk := range s.Data["keys"].([]interface{}) {
+					sks := sk.(string)
+					if strings.HasSuffix(sks, "/") {
+						scanPool = append(scanPool, scanPool[0]+sks)
+					} else {
+						keyPool = append(keyPool, scanPool[0]+sks)
+					}
+				}
+			}
+
+			scanPool = scanPool[1:len(scanPool)]
+		}
+
+	} else {
+		keyPool = append(keyPool, key)
 	}
 
-	if data.Data[cfg.Field] == nil {
-		return nil, fmt.Errorf("The key %q does not have a field named %q.", rconfig.Args()[1], cfg.Field)
+	for _, k := range keyPool {
+		data, err := client.Logical().Read(k)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to read from key %q: %s", k, err)
+		}
+
+		if data.Data[cfg.Field] == nil {
+			return nil, fmt.Errorf("The key %q does not have a field named %q.", k, cfg.Field)
+		}
+
+		resp = append(resp, token{Name: k, Secret: data.Data[cfg.Field].(string)})
 	}
 
-	return []token{{Name: rconfig.Args()[1], Secret: data.Data[cfg.Field].(string)}}, nil
+	return resp, nil
 }
