@@ -1,3 +1,8 @@
+# 0.2.0 / 2017-01-04
+
+  * Support name field in Vault keys
+  * Allow trailing wildcard to display multiple TOTP
+
 # 0.1.2 / 2017-01-03
 
   * Fix: Do not prefix oneshot output with \r
