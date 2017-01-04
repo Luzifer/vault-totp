@@ -1,3 +1,7 @@
+# 0.2.2 / 2017-01-04
+
+  * Temporarily drop Windows support
+
 # 0.2.1 / 2017-01-04
 
   * Fix: Update vendored code
