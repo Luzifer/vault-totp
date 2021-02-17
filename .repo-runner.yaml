@@ -1,6 +1,6 @@
 ---
 
-image: "quay.io/luzifer/repo-runner-image"
+image: "reporunner/golang-alpine"
 checkout_dir: /go/src/github.com/Luzifer/vault-totp
 
 commands:
@@ -8,4 +8,6 @@ commands:
 
 environment:
   CGO_ENABLED: 0
+  GO111MODULE: on
+  MOD_MODE: readonly
   ARCHS: linux/amd64 linux/arm darwin/amd64
