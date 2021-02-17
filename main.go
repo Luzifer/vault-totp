@@ -166,6 +166,10 @@ func getSecretsFromVault() ([]token, error) {
 			return nil, fmt.Errorf("Unable to read from key %q: %s", k, err)
 		}
 
+		if data == nil {
+			return nil, fmt.Errorf("Key %q not found", k)
+		}
+
 		if data.Data[cfg.Field] == nil {
 			return nil, fmt.Errorf("The key %q does not have a field named %q.", k, cfg.Field)
 		}
