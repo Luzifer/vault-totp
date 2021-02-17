@@ -1,3 +1,8 @@
+# 0.2.3 / 2021-02-17
+
+  * handle key not found error (#2)
+  * Add install make target
+
 # 0.2.2 / 2017-01-04
 
   * Temporarily drop Windows support
