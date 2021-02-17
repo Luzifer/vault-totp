@@ -1,3 +1,9 @@
+# 0.2.4 / 2021-02-17
+
+  * Update build image / add GO111MODULE mode
+  * Add go modules support
+  * Remove godeps / vendoring
+
 # 0.2.3 / 2021-02-17
 
   * handle key not found error (#2)
