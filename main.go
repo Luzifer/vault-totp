@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Luzifer/rconfig"
+	"github.com/Luzifer/rconfig/v2"
 	"github.com/hashicorp/vault/api"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/sethgrid/curse"
@@ -117,7 +117,6 @@ func getSecretsFromVault() ([]token, error) {
 	client, err := api.NewClient(&api.Config{
 		Address: cfg.VaultAddress,
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("Unable to create client: %s", err)
 	}
